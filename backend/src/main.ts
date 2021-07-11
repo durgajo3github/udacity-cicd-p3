@@ -52,4 +52,3 @@ async function bootstrap() {
 }
 
 bootstrap();
-© 2021 GitHub, Inc.
