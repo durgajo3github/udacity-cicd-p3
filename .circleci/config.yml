@@ -548,13 +548,9 @@ workflows:
   default:
     jobs:
       - build-frontend:
-          context: 
-            - slack-secrets
-            - org-global
+          context: org-global 
       - build-backend:
-          context: 
-            - slack-secrets
-            - org-global
+          context: org-global 
       - test-frontend:
           requires: [build-frontend]
           context: slack-secrets
