@@ -132,8 +132,6 @@ jobs:
       MY_STEP_NAME: "Test frontend"
     steps:
       - checkout
-      - restore_cache:
-          keys: [frontend-build]
       - run:
           name: Run tests with JUnit 
           working_directory: ./frontend
@@ -156,8 +154,6 @@ jobs:
       MY_STEP_NAME: "Test backend"    
     steps:
       - checkout
-      - restore_cache:
-          keys: [backend-build]
       - run:
           name: Run tests with JUnit
           working_directory: ./backend
@@ -180,8 +176,6 @@ jobs:
       MY_STEP_NAME: "Security scan frontend"    
     steps:
       - checkout
-      - restore_cache:
-          keys: [frontend-build]      
       - run:
           name: frontend security check
           working_directory: ./frontend
@@ -197,9 +191,7 @@ jobs:
     environment: 
       MY_STEP_NAME: "Security scan backend"    
     steps:
-      - checkout  
-      - restore_cache:
-          keys: [backend-build]          
+      - checkout          
       - run:
           name: backend security check
           working_directory: ./backend
