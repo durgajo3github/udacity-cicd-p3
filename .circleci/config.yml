@@ -103,8 +103,8 @@ jobs:
           name: Build front-end
           working_directory: ./frontend
           command: 
-            npm cache clean 
             npm i
+            npm cache clean
             npm run build 
       - slack/notify: 
           <<: *slack_msg          
@@ -120,8 +120,8 @@ jobs:
           name: Back-end build
           working_directory: ./backend
           command:          
-             npm cache clean  
              npm i
+             npm cache clean 
              npm run build             
       - slack/notify:
           <<: *slack_msg       
