@@ -103,7 +103,7 @@ jobs:
           name: Build front-end
           working_directory: ./frontend
           command: 
-            npm cache clean --force 
+            npm cache clean 
             npm i
             npm run build 
       - slack/notify: 
@@ -120,7 +120,7 @@ jobs:
           name: Back-end build
           working_directory: ./backend
           command:          
-             npm cache clean --force 
+             npm cache clean  
              npm i
              npm run build             
       - slack/notify:
