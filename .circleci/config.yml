@@ -62,9 +62,9 @@ commands:
             && pip3 install awscli \
             && rm -rf /var/cache/apk/*
             echo "Destroying environment: <<parameters.workflow_id>> "
-            aws cloudformation delete-stack --stack-name udapeoplep3-backend-<<parameters.workflow_id>>
-            aws s3 rm s3://udapeoplep3-udap-<<parameters.workflow_id>> --recursive
-            aws cloudformation delete-stack --stack-name udapeoplep3-frontend-<<parameters.workflow_id>>
+            aws cloudformation delete-stack --stack-name udapeople-backend-<<parameters.workflow_id>>
+            aws s3 rm s3://udapeople-udap-<<parameters.workflow_id>> --recursive
+            aws cloudformation delete-stack --stack-name udapeople-frontend-<<parameters.workflow_id>>
 # ----------------------------------   to reverse the migration   --------------------------------------------------------------------------
   revert-migrations:
     description: Revert the last migration if successfully run in the current workflow.    
@@ -218,7 +218,7 @@ jobs:
           command: |
             aws cloudformation deploy \
               --template-file .circleci/files/backend.yml \
-              --stack-name udapeoplep3-backend-${CIRCLE_WORKFLOW_ID:0:7} \
+              --stack-name udapeople-backend-${CIRCLE_WORKFLOW_ID:0:7} \
               --parameter-overrides ID="udap-${CIRCLE_WORKFLOW_ID:0:7}" \
               --region us-west-2
       - run:
@@ -226,7 +226,7 @@ jobs:
           command: |
             aws cloudformation deploy \
               --template-file .circleci/files/frontend.yml \
-              --stack-name udapeoplep3-frontend-${CIRCLE_WORKFLOW_ID:0:7} \
+              --stack-name udapeople-frontend-${CIRCLE_WORKFLOW_ID:0:7} \
               --parameter-overrides ID="udap-${CIRCLE_WORKFLOW_ID:0:7}" \
               --region us-west-2
       - run:
@@ -365,7 +365,7 @@ jobs:
           name: copy frontend package to aws s3 bucket
           command: |
             cd ~/project/frontend
-            aws s3 cp dist s3://udapeoplep3-udap-${CIRCLE_WORKFLOW_ID:0:7} --recursive
+            aws s3 cp dist s3://udapeople-udap-${CIRCLE_WORKFLOW_ID:0:7} --recursive
       - persist_to_workspace:
           root: ~/
           paths:
@@ -457,7 +457,7 @@ jobs:
       - run:
           name: Frontend smoke test
           command: |
-            if curl -s http://udapeoplep3-udap-${CIRCLE_WORKFLOW_ID:0:7}.s3-website.us-west-2.amazonaws.com/ | grep "Welcome"
+            if curl -s http://udapeople-udap-${CIRCLE_WORKFLOW_ID:0:7}.s3-website.us-west-2.amazonaws.com/ | grep "Welcome"
             then
               return 0
             else
