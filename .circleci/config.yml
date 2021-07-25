@@ -301,8 +301,8 @@ jobs:
       MY_STEP_NAME: "Run Migrations"
     steps:
       - checkout
-     # - restore_cache:
-     #    keys: [backend-build]
+      - restore_cache:
+         keys: [backend-build]
       - run:
           name: Run migrations
           working_directory: ./backend
