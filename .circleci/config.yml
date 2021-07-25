@@ -301,8 +301,8 @@ jobs:
       MY_STEP_NAME: "Run Migrations"
     steps:
       - checkout
-      - restore_cache:
-          keys: [backend-build]
+     # - restore_cache:
+     #    keys: [backend-build]
       - run:
           name: Run migrations
           working_directory: ./backend
@@ -560,10 +560,10 @@ workflows:
           requires: [configure-infrastructure]
           context: slack-secrets
       - deploy-backend:
-      #   requires: [run-migrations] 
+          requires: [run-migrations] 
           context: slack-secrets     
       - deploy-frontend:
-          requires: [deploy-backend]
+          requires: [run-migrations, deploy-backend]
           context: slack-secrets
       - smoke-test:
           requires: [deploy-backend, deploy-frontend]
