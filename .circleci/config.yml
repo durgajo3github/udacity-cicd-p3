@@ -93,7 +93,7 @@ commands:
 jobs:
 
 # -----------------------------  Build front end ----------------------
-    build-frontend:
+  build-frontend:
     <<: *dok_node
     environment: 
       MY_STEP_NAME: "Build frontend"
@@ -112,7 +112,7 @@ jobs:
           key: frontend-build 
 
 # -----------------------------  Build back end ----------------------
- build-backend:
+  build-backend:
     <<: *dok_node
     environment: 
       MY_STEP_NAME: "Test frontend"
@@ -152,7 +152,7 @@ jobs:
           path: ./frontend/testres
 
 # -----------------------------  Test back end  ----------------------                
- test-backend:
+  test-backend:
     <<: *dok_node
     environment: 
       MY_STEP_NAME: "Test backend"    
@@ -190,7 +190,7 @@ jobs:
             npm audit fix --audit-level=critical --force
 
 # -----------------------------  Test back end for security ----------            
- scan-backend:
+  scan-backend:
     <<: *dok_node
     environment: 
       MY_STEP_NAME: "Security scan backend"    
@@ -527,8 +527,8 @@ jobs:
 workflows:
   default:
     jobs:
-      - build-frontend:
-      - build-backend:
+      - build-frontend
+      - build-backend
       - test-frontend:
           requires: [build-frontend]
       - test-backend:
