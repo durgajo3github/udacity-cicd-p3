@@ -93,38 +93,42 @@ commands:
 jobs:
 
 # -----------------------------  Build front end ----------------------
-  build-frontend:
+    build-frontend:
     <<: *dok_node
     environment: 
       MY_STEP_NAME: "Build frontend"
     steps:
       - checkout
+      - restore_cache:
+          keys: [frontend-build]
       - run:
           name: Build front-end
           working_directory: ./frontend
-          command: 
+          command:             
             npm i
-            npm cache clean
-            npm run build 
-      - slack/notify: 
-          <<: *slack_msg          
+            npm run build                        
+      - save_cache:
+          paths: [frontend/node_modules]
+          key: frontend-build 
 
 # -----------------------------  Build back end ----------------------
-  build-backend:
+ build-backend:
     <<: *dok_node
     environment: 
-      MY_STEP_NAME: "Build backend"
+      MY_STEP_NAME: "Test frontend"
     steps:
       - checkout
+      - restore_cache:
+          keys: [backend-build]
       - run:
           name: Back-end build
           working_directory: ./backend
-          command:          
+          command:              
              npm i
-             npm cache clean 
              npm run build             
-      - slack/notify:
-          <<: *slack_msg       
+      - save_cache:
+          paths: [backend/node_modules]
+          key: backend-build 
 # -----------------------------  Test front end  ----------------------
   test-frontend:
     <<: *dok_node
@@ -132,6 +136,8 @@ jobs:
       MY_STEP_NAME: "Test frontend"
     steps:
       - checkout
+      - restore_cache:
+          keys: [frontend-build]
       - run:
           name: Run tests with JUnit 
           working_directory: ./frontend
@@ -144,16 +150,16 @@ jobs:
           path: ./frontend/testres
       - store_artifacts:
           path: ./frontend/testres
-      - slack/notify:
-          <<: *slack_msg
 
 # -----------------------------  Test back end  ----------------------                
-  test-backend:
+ test-backend:
     <<: *dok_node
     environment: 
       MY_STEP_NAME: "Test backend"    
     steps:
       - checkout
+      - restore_cache:
+          keys: [backend-build]
       - run:
           name: Run tests with JUnit
           working_directory: ./backend
@@ -166,9 +172,7 @@ jobs:
           path: ./backend/testres
       - store_artifacts:
           path: ./backend/testres
-      - slack/notify:
-          <<: *slack_msg
-
+          
 # -----------------------------  Test front end for security ----------            
   scan-frontend:
     <<: *dok_node
@@ -176,29 +180,29 @@ jobs:
       MY_STEP_NAME: "Security scan frontend"    
     steps:
       - checkout
+      - restore_cache:
+          keys: [frontend-build]      
       - run:
           name: frontend security check
           working_directory: ./frontend
           command: 
             npm i
             npm audit fix --audit-level=critical --force
-      - slack/notify:
-          <<: *slack_msg
 
 # -----------------------------  Test back end for security ----------            
-  scan-backend:
+ scan-backend:
     <<: *dok_node
     environment: 
       MY_STEP_NAME: "Security scan backend"    
     steps:
-      - checkout          
+      - checkout  
+      - restore_cache:
+          keys: [backend-build]          
       - run:
           name: backend security check
           working_directory: ./backend
           command: 
             npm audit fix --audit-level=critical --force
-      - slack/notify:
-          <<: *slack_msg
 
 #   -------------------------------------------------------------------------
 #                   AWS  INFRA. PART start from here
@@ -245,8 +249,7 @@ jobs:
             - output.txt
       - destroy-environment:
           workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"
-      - slack/notify:
-          <<: *slack_msg
+     
 # -----------------------------  aws infra config  ---------------------  
 #                fingerprint taken from ssh of circle ci  
 #  ---------------------------------------------------------------------
@@ -272,7 +275,7 @@ jobs:
           command: |
             pwd
             cat .circleci/ansible/inventory.txt
-            echo ENVIRONMENT=production > "backend/.env"   
+            echo ENVIRONMENT=production >> "backend/.env"   
             echo TYPEORM_CONNECTION=postgres >> "backend/.env"
             echo TYPEORM_ENTITIES=./src/modules/domain/**/*.entity.ts >> "backend/.env"
             echo TYPEORM_MIGRATIONS=./src/migrations/*.ts >> "backend/.env"
@@ -302,11 +305,11 @@ jobs:
     steps:
       - checkout
       - restore_cache:
-         keys: [backend-build]
+          keys: [backend-build]
       - run:
           name: Run migrations
           working_directory: ./backend
-          command: |  
+          command: |            
             npm install            
             npm run build
             npm run migrations >> migration_output.txt
@@ -318,16 +321,16 @@ jobs:
             if [grep -q "executed successfully" migration_output.txt]
             then
               echo "DB migration was successful"
-              curl -H "Content-Type: text/plain" -H "token: 58c78a8b-64a1-4bd9-8527-e0f897b1d02a" --request PUT --data "db_success" https://api.memstash.io/values/migration_status_${CIRCLE_WORKFLOW_ID:0:7}
+              curl -H "Content-Type: text/plain" -H "token: 6fafc41a-e956-4316-abf9-6b4d6a306a94" --request PUT --data "db_success" https://api.memstash.io/values/migration_status_${CIRCLE_WORKFLOW_ID:0:7}
             else
               echo "DB migration failed, looks like already exists...moving on."
-              curl -H "Content-Type: text/plain" -H "token: 58c78a8b-64a1-4bd9-8527-e0f897b1d02a" --request PUT --data "db_failure" https://api.memstash.io/values/migration_status_${CIRCLE_WORKFLOW_ID:0:7}
+              curl -H "Content-Type: text/plain" -H "token: 6fafc41a-e956-4316-abf9-6b4d6a306a94" --request PUT --data "db_failure" https://api.memstash.io/values/migration_status_${CIRCLE_WORKFLOW_ID:0:7}
             fi
             echo "WorkflowID=${CIRCLE_WORKFLOW_ID:0:7}"                    
       - destroy-environment:          
           workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"
-      - slack/notify:
-          <<: *slack_msg
+          
+          
 # -----------------------------  Deployment of app begins here  ---------------------            
 # -----------------------------  Deploy front-end  ----------------------------------
   deploy-frontend:
@@ -418,8 +421,7 @@ jobs:
           workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"
       - revert-migrations:
           workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}" 
-      - slack/notify:
-          <<: *slack_msg 
+   
 # -----------------------------  Deploy complete  ----------------------------------
 
 # -----------------------------  start of smoke testing after deployment  ----------------------------
@@ -467,9 +469,7 @@ jobs:
           workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"
       - revert-migrations:
           workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"
-      - slack/notify:
-          <<: *slack_msg
-
+    
 # -----------------------------  Cloud front distribution  ----------------------------
 
   cloudfront-update:
@@ -495,9 +495,7 @@ jobs:
           workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"
       - revert-migrations:
           workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"
-      - slack/notify:
-          <<: *slack_msg
-  
+       
 # -----------------------------  Clean up the mess dont want AWS to charge ----------------------------
   cleanup:
       docker:
@@ -521,8 +519,6 @@ jobs:
                 aws cloudformation delete-stack --stack-name "udapeople-frontend-${OldWorkflowID:5:7}"
               fi
   
-        - slack/notify:
-            <<: *slack_msg
 # -------------------------------------------------------------------------------
 #
 #         WORKFLOW STEPS STARTS FROM HERE
@@ -532,45 +528,32 @@ workflows:
   default:
     jobs:
       - build-frontend:
-          context: slack-secrets 
       - build-backend:
-          context: slack-secrets 
       - test-frontend:
           requires: [build-frontend]
-          context: slack-secrets
       - test-backend:
           requires: [build-backend]
-          context: slack-secrets
       - scan-frontend:
           requires: [build-frontend]
-          context: slack-secrets
       - scan-backend:
           requires: [build-backend]
-          context: slack-secrets
       - deploy-infrastructure:
           requires: [build-frontend, build-backend, test-frontend, test-backend, scan-frontend, scan-backend]
-          context: slack-secrets
           filters:
             branches:
               only: [master]
       - configure-infrastructure:
           requires: [deploy-infrastructure]
-          context: slack-secrets
       - run-migrations:
           requires: [configure-infrastructure]
-          context: slack-secrets
       - deploy-backend:
-          requires: [run-migrations] 
-          context: slack-secrets     
+          requires: [run-migrations]           
       - deploy-frontend:
           requires: [run-migrations, deploy-backend]
-          context: slack-secrets
       - smoke-test:
           requires: [deploy-backend, deploy-frontend]
-          context: slack-secrets
       - cloudfront-update:
-          requires: [smoke-test]
-          context: slack-secrets      
+          requires: [smoke-test]            
       # - cleanup:
       #     requires: [cloudfront-update]
       #     context: slack-secrets
